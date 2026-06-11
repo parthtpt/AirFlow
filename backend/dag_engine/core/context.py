@@ -1,0 +1,2 @@
+CURRENT_DAG = None
+DAG_REGISTRY = {}
