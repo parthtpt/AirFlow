@@ -68,11 +68,14 @@ def pipeline():
     )
 
     # 5. Run a Python script on a remote box.
+    #    `pool` caps how many tasks across all DAGs hit this resource at once.
+    #    Create the "remote_pool" pool in the dashboard (Pools page) to enforce it.
     run_remote_py = SSHOperator(
         task_id="run_python_on_remote",
         conn_id="remote",
         command="python3 /opt/jobs/aggregate.py --input /opt/app/incoming",
         retries=2,
+        pool="remote_pool",
     )
 
     # 6. Pull the results back down to local (prod -> local).

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}AirFlow · Pools{% endblock %}
+{% block content %}
+  <h2>Pools</h2>
+  <p class="muted" style="margin-top:-6px;">
+    A pool caps how many tasks run at once across all DAGs. Assign a task to a
+    pool with <code>pool="name"</code> on its operator.
+  </p>
+
+  {% if pools %}
+  <table>
+    <thead><tr><th>Pool</th><th>Slots</th><th>Used</th><th>Available</th><th>Utilisation</th><th>Description</th></tr></thead>
+    <tbody>
+      {% for p in pools %}
+      <tr>
+        <td><code>{{ p.name }}</code></td>
+        <td>{{ p.slots }}</td>
+        <td>{{ p.used }}</td>
+        <td>{{ p.available }}</td>
+        <td style="min-width:120px;">
+          <div class="bar"><span style="width:{{ (100 * p.used / p.slots) if p.slots else 0 }}%"></span></div>
+        </td>
+        <td class="muted">{{ p.description or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No pools yet.</p>
+  {% endif %}
+
+  <h2>Create / update a pool</h2>
+  <div class="card">
+    <form class="inline" method="post" action="/pools">
+      <label class="field">Name
+        <input type="text" name="name" required placeholder="remote_pool">
+      </label>
+      <label class="field">Slots
+        <input type="number" name="slots" required min="1" value="4">
+      </label>
+      <label class="field" style="flex:1; min-width:220px;">Description
+        <input type="text" name="description" placeholder="optional">
+      </label>
+      <button class="btn" type="submit">Save pool</button>
+    </form>
+  </div>
+{% endblock %}

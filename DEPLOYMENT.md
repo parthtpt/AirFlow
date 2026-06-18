@@ -47,6 +47,16 @@ The dashboard's top nav links to the API docs and the database UI, so everything
 is reachable from one place. Adminer login: system **PostgreSQL**, server
 **postgres**, plus the user/password/db from your `.env`.
 
+The dashboard (Airflow-style) includes:
+- **DAG graph** — upstream → downstream, colored by the latest run's task states.
+- **Grid** — a runs × tasks matrix of state cells (click a column to open a run).
+- **Run detail** — per-task timing: queued / started / finished, **wait** time and
+  **duration**, plus a state-colored graph and log links.
+- **Pools** — create concurrency pools (name + slots); tasks set `pool="name"` on
+  their operator, and at most `slots` of them run at once across all DAGs. The
+  page shows live used / available slots.
+- **Trigger** buttons and a **Code** view per DAG.
+
 ## Writing pipelines
 
 You only write DAG files in `backend/dags/`. See **AUTHORING.md** for the full

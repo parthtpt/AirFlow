@@ -1,18 +1,59 @@
 {% extends "base.html" %}
 {% block title %}AirFlow · {{ dag.dag_id }}{% endblock %}
 {% block content %}
-  <p><a href="/">&larr; Dashboard</a></p>
-  <h2>{{ dag.dag_id }}</h2>
-  <p class="muted">Schedule <code>{{ dag.schedule }}</code> ·
-     {{ "active" if dag.is_active else "inactive" }}</p>
+  <p><a href="/">&larr; DAGs</a></p>
+  <div class="row" style="justify-content:space-between; align-items:center;">
+    <div>
+      <h2 style="border:none; margin-bottom:4px;">{{ dag.dag_id }}</h2>
+      <span class="muted">Schedule <code>{{ dag.schedule }}</code> ·
+        {{ "active" if dag.is_active else "inactive" }}</span>
+    </div>
+    <form method="post" action="/dags/{{ dag.dag_id }}/trigger" style="margin:0">
+      <button class="btn" type="submit">▶ Trigger run</button>
+    </form>
+  </div>
+
+  <h2>Graph</h2>
+  <p class="muted" style="margin-top:-6px;">Upstream → downstream. Colored by the latest run.</p>
+  <div class="graph"><pre class="mermaid">{{ mermaid | safe }}</pre></div>
+
+  <h2>Grid</h2>
+  {% if grid_runs %}
+  <div class="card" style="overflow:auto;">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="taskname">task \ run →</th>
+          {% for r in grid_runs %}
+          <th><a href="/runs/{{ r.id }}" title="{{ r.state }}">{{ loop.index }}</a></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in grid_tasks %}
+        <tr>
+          <td class="taskname">{{ t }}</td>
+          {% for r in grid_runs %}
+          {% set st = grid_states.get(r.id, {}).get(t, '') %}
+          <td><span class="cell {{ st }}" title="{{ t }}: {{ st or 'no run' }}"></span></td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">No runs yet — trigger one above.</p>
+  {% endif %}
 
   <h2>Tasks</h2>
   {% if tasks %}
   <table>
-    <thead><tr><th>Task</th><th>Retries</th><th>Timeout (s)</th></tr></thead>
+    <thead><tr><th>Task</th><th>Pool</th><th>Retries</th><th>Timeout (s)</th></tr></thead>
     <tbody>
       {% for t in tasks %}
-      <tr><td>{{ t.task_id }}</td><td>{{ t.retries }}</td><td>{{ t.timeout_seconds }}</td></tr>
+      <tr><td>{{ t.task_id }}</td><td><code>{{ t.pool }}</code></td>
+          <td>{{ t.retries }}</td><td>{{ t.timeout_seconds }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -23,13 +64,13 @@
   <h2>Runs</h2>
   {% if runs %}
   <table>
-    <thead><tr><th>State</th><th>Execution date</th><th>Started</th><th></th></tr></thead>
+    <thead><tr><th>State</th><th>Execution date</th><th>Duration</th><th></th></tr></thead>
     <tbody>
       {% for run in runs %}
       <tr>
         <td><span class="badge {{ run.state }}">{{ run.state }}</span></td>
-        <td class="muted">{{ run.execution_date or "-" }}</td>
-        <td class="muted">{{ run.created_at or "-" }}</td>
+        <td class="muted">{{ run.execution_date | dt }}</td>
+        <td class="muted">{{ run.duration | dur }}</td>
         <td><a href="/runs/{{ run.id }}">view</a></td>
       </tr>
       {% endfor %}
@@ -38,4 +79,12 @@
   {% else %}
   <p class="empty">No runs yet.</p>
   {% endif %}
+
+  <h2>Code</h2>
+  <pre>{{ source }}</pre>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
 {% endblock %}

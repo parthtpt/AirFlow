@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 
@@ -6,9 +7,21 @@ from backend.database.models.dag import DAG
 from backend.database.models.dag_run import DagRun
 from backend.database.session import SessionLocal
 
+TERMINAL = {"success", "failed"}
+
 
 def _as_uuid(value):
     return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
+
+
+def _now():
+    return datetime.now(timezone.utc)
+
+
+def _duration(started, finished):
+    if started and finished:
+        return (finished - started).total_seconds()
+    return None
 
 
 class DagRunRepository:
@@ -36,10 +49,13 @@ class DagRunRepository:
                     dag_id=dag_uuid,
                     state="running",
                     execution_date=execution_date,
+                    started_at=_now(),
                 )
                 session.add(run)
             else:
                 run.state = "running"
+                if run.started_at is None:
+                    run.started_at = _now()
             session.commit()
 
     def set_state(self, run_id, state):
@@ -48,6 +64,8 @@ class DagRunRepository:
             run = session.get(DagRun, run_id)
             if run:
                 run.state = state
+                if state in TERMINAL and run.finished_at is None:
+                    run.finished_at = _now()
                 session.commit()
 
     def get(self, run_id):
@@ -72,6 +90,8 @@ class DagRunRepository:
                     DagRun.state,
                     DagRun.execution_date,
                     DagRun.created_at,
+                    DagRun.started_at,
+                    DagRun.finished_at,
                 )
                 .join(DAG, DAG.id == DagRun.dag_id)
                 .order_by(DagRun.created_at.desc())
@@ -84,6 +104,9 @@ class DagRunRepository:
                     "state": row[2],
                     "execution_date": row[3],
                     "created_at": row[4],
+                    "started_at": row[5],
+                    "finished_at": row[6],
+                    "duration": _duration(row[5], row[6]),
                 }
                 for row in session.execute(stmt).all()
             ]
@@ -96,6 +119,8 @@ class DagRunRepository:
                     DagRun.state,
                     DagRun.execution_date,
                     DagRun.created_at,
+                    DagRun.started_at,
+                    DagRun.finished_at,
                 )
                 .where(DagRun.dag_id == dag_uuid)
                 .order_by(DagRun.created_at.desc())
@@ -107,6 +132,9 @@ class DagRunRepository:
                     "state": row[1],
                     "execution_date": row[2],
                     "created_at": row[3],
+                    "started_at": row[4],
+                    "finished_at": row[5],
+                    "duration": _duration(row[4], row[5]),
                 }
                 for row in session.execute(stmt).all()
             ]

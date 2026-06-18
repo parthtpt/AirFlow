@@ -17,8 +17,9 @@ class BaseOperator(Task):
     Operators should raise on failure; the executor handles retries.
     """
 
-    def __init__(self, task_id, retries=0, **kwargs):
+    def __init__(self, task_id, retries=0, pool="default_pool", **kwargs):
         super().__init__(task_id=task_id, retries=retries)
+        self.pool = pool
         self.kwargs = kwargs
 
     def execute(self, context):  # pragma: no cover - abstract

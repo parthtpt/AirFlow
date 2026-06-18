@@ -16,6 +16,7 @@ from croniter import croniter
 from backend.dag_engine.parser import DAGParser
 from backend.database.repositories.dag_repository import DAGRepository
 from backend.database.repositories.dag_run_repository import DagRunRepository
+from backend.database.repositories.pool_repository import PoolRepository
 from backend.database.repositories.task_repository import TaskRepository
 
 
@@ -26,7 +27,9 @@ class Scheduler:
         self.dags = DAGRepository()
         self.tasks = TaskRepository()
         self.dag_runs = DagRunRepository()
+        self.pools = PoolRepository()
         self.interval = interval or int(os.getenv("SCHEDULER_INTERVAL", "10"))
+        self.pools.ensure_default()
 
     def sync_dags(self):
         parsed = self.parser.parse()
@@ -36,7 +39,10 @@ class Scheduler:
             row = self.dags.get_by_dag_id(dag.dag_id)
             for task in dag.tasks.values():
                 self.tasks.get_or_create(
-                    row.id, task.task_id, retries=getattr(task, "retries", 0)
+                    row.id,
+                    task.task_id,
+                    retries=getattr(task, "retries", 0),
+                    pool=getattr(task, "pool", "default_pool"),
                 )
 
         print(f"Synced {len(parsed)} DAG(s)", flush=True)

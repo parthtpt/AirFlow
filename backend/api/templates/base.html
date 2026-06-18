@@ -33,15 +33,41 @@
     .skipped { background:#422006; color:#fcd34d; }
     .muted { color:var(--muted); }
     .empty { color:var(--muted); padding:12px 0; }
+    .btn { display:inline-block; background:var(--accent); color:#04263a;
+           padding:7px 14px; border-radius:7px; font-weight:600; font-size:13px;
+           border:none; cursor:pointer; }
+    .btn:hover { filter:brightness(1.1); text-decoration:none; }
+    .card { background:var(--panel); border:1px solid var(--border);
+            border-radius:10px; padding:16px 18px; margin:14px 0; }
+    .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+    .graph { background:#020617; border:1px solid var(--border);
+             border-radius:8px; padding:12px; overflow:auto; }
+    form.inline { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    label.field { display:flex; flex-direction:column; gap:4px; font-size:13px;
+                  color:var(--muted); }
+    input, textarea { background:#0b1220; border:1px solid var(--border);
+                      color:var(--text); border-radius:6px; padding:7px 9px;
+                      font-size:14px; }
+    /* grid view */
+    .grid td, .grid th { text-align:center; padding:5px; }
+    .grid .taskname { text-align:left; white-space:nowrap; }
+    .cell { display:inline-block; width:16px; height:16px; border-radius:3px;
+            background:#1f2937; }
+    .cell.success { background:#10b981; } .cell.failed { background:#ef4444; }
+    .cell.running { background:#3b82f6; } .cell.queued { background:#6b7280; }
+    .cell.skipped { background:#f59e0b; }
+    .bar { height:8px; border-radius:4px; background:#334155; overflow:hidden; }
+    .bar > span { display:block; height:100%; background:var(--accent); }
   </style>
 </head>
 <body>
   <header>
     <h1>🌀 AirFlow</h1>
     <nav style="display:flex; gap:18px;">
-      <a href="/">Dashboard</a>
+      <a href="/">DAGs</a>
+      <a href="/pools">Pools</a>
       <a href="/docs">API Docs</a>
-      <a href="{{ adminer_url }}" target="_blank">Database (Adminer)</a>
+      <a href="{{ adminer_url }}" target="_blank">Database</a>
     </nav>
   </header>
   <main>

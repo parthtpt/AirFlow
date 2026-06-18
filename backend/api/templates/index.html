@@ -1,16 +1,21 @@
 {% extends "base.html" %}
-{% block title %}AirFlow · Dashboard{% endblock %}
+{% block title %}AirFlow · DAGs{% endblock %}
 {% block content %}
   <h2>DAGs</h2>
   {% if dags %}
   <table>
-    <thead><tr><th>DAG</th><th>Schedule</th><th>Active</th></tr></thead>
+    <thead><tr><th>DAG</th><th>Schedule</th><th>Active</th><th></th></tr></thead>
     <tbody>
       {% for dag in dags %}
       <tr>
         <td><a href="/dags/{{ dag.dag_id }}">{{ dag.dag_id }}</a></td>
         <td><code>{{ dag.schedule }}</code></td>
         <td>{{ "yes" if dag.is_active else "no" }}</td>
+        <td>
+          <form method="post" action="/dags/{{ dag.dag_id }}/trigger" style="margin:0">
+            <button class="btn" type="submit">Trigger</button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -22,14 +27,14 @@
   <h2>Recent runs</h2>
   {% if runs %}
   <table>
-    <thead><tr><th>DAG</th><th>State</th><th>Execution date</th><th>Started</th><th></th></tr></thead>
+    <thead><tr><th>DAG</th><th>State</th><th>Execution date</th><th>Duration</th><th></th></tr></thead>
     <tbody>
       {% for run in runs %}
       <tr>
         <td><a href="/dags/{{ run.dag_id }}">{{ run.dag_id }}</a></td>
         <td><span class="badge {{ run.state }}">{{ run.state }}</span></td>
-        <td class="muted">{{ run.execution_date or "-" }}</td>
-        <td class="muted">{{ run.created_at or "-" }}</td>
+        <td class="muted">{{ run.execution_date | dt }}</td>
+        <td class="muted">{{ run.duration | dur }}</td>
         <td><a href="/runs/{{ run.id }}">view</a></td>
       </tr>
       {% endfor %}

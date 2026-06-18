@@ -7,7 +7,7 @@ from backend.database.session import SessionLocal
 class TaskRepository:
 
     def get_or_create(self, dag_uuid, task_id: str, retries: int = 0,
-                      timeout_seconds: int = 3600):
+                      timeout_seconds: int = 3600, pool: str = "default_pool"):
         with SessionLocal() as session:
             stmt = select(Task).where(
                 Task.dag_id == dag_uuid,
@@ -21,15 +21,15 @@ class TaskRepository:
                     task_id=task_id,
                     retries=retries,
                     timeout_seconds=timeout_seconds,
+                    pool=pool,
                 )
                 session.add(task)
-                session.commit()
-                session.refresh(task)
             else:
                 task.retries = retries
-                session.commit()
-                session.refresh(task)
+                task.pool = pool
 
+            session.commit()
+            session.refresh(task)
             return task
 
     def list_by_dag(self, dag_uuid):

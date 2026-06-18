@@ -1,5 +1,7 @@
 import uuid
+from datetime import datetime
 
+from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -41,5 +43,20 @@ class TaskRun(Base, AuditMixin):
 
     log_path: Mapped[str | None] = mapped_column(
         Text,
+        nullable=True,
+    )
+
+    queued_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )

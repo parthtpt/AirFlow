@@ -41,3 +41,9 @@ class Task(Base, AuditMixin):
         Integer,
         default=3600,
     )
+
+    pool: Mapped[str] = mapped_column(
+        String(255),
+        default="default_pool",
+        index=True,
+    )

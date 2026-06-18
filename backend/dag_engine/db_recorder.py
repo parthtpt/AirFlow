@@ -3,8 +3,11 @@
 Plugs into DagRunner via the recorder interface (see executor.NullRecorder).
 """
 
+import time
+
 from backend.database.repositories.dag_repository import DAGRepository
 from backend.database.repositories.dag_run_repository import DagRunRepository
+from backend.database.repositories.pool_repository import PoolRepository
 from backend.database.repositories.task_repository import TaskRepository
 from backend.database.repositories.task_run_repository import TaskRunRepository
 
@@ -16,7 +19,21 @@ class DBRecorder:
         self.dag_runs = DagRunRepository()
         self.tasks = TaskRepository()
         self.task_runs = TaskRunRepository()
+        self.pools = PoolRepository()
         self._dag_uuid = None
+
+    def acquire_slot(self, pool_name, log, poll=2):
+        """Block until the pool has a free slot (global concurrency limit)."""
+        announced = False
+        while True:
+            pool = self.pools.get_by_name(pool_name)
+            slots = pool.slots if pool else 9999
+            if self.pools.running_count(pool_name) < slots:
+                return
+            if not announced:
+                log(f"pool '{pool_name}' is full ({slots} slots); waiting...")
+                announced = True
+            time.sleep(poll)
 
     def run_started(self, dag_id, run_id, execution_date):
         dag = self.dags.get_by_dag_id(dag_id)

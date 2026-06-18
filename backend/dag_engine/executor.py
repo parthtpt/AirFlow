@@ -55,6 +55,10 @@ class NullRecorder:
     def run_finished(self, run_id, state):
         pass
 
+    def acquire_slot(self, pool_name, log):
+        """Block until the named pool has a free slot. No-op without a DB."""
+        pass
+
 
 def topological_order(dag):
     """Return tasks in dependency order (Kahn's algorithm). Raises on a cycle."""
@@ -120,6 +124,13 @@ class DagRunner:
                 continue
 
             log_path = str(run_dir / f"{task_id}.log")
+            pool = getattr(task, "pool", "default_pool")
+
+            # Respect pool concurrency before claiming the task.
+            self.recorder.acquire_slot(pool, lambda m: print(f"({task_id}) {m}", flush=True))
+            # Mark running so the dashboard/grid reflects live state.
+            self.recorder.task_state(run_id, task_id, RUNNING, log_path)
+
             state = self._run_task(task, run_id, dag.dag_id, execution_date, log_path)
             states[task_id] = state
             self.recorder.task_state(run_id, task_id, state, log_path)

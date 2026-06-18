@@ -1,23 +1,41 @@
 {% extends "base.html" %}
-{% block title %}AirFlow · Run {{ run.id }}{% endblock %}
+{% block title %}AirFlow · Run{% endblock %}
 {% block content %}
-  <p><a href="/">&larr; Dashboard</a></p>
-  <h2>Run <span class="badge {{ run.state }}">{{ run.state }}</span></h2>
-  <p class="muted">id <code>{{ run.id }}</code><br>
-     execution date {{ run.execution_date or "-" }}</p>
+  <p><a href="/dags/{{ dag_id }}">&larr; {{ dag_id }}</a></p>
+  <h2 style="border:none;">Run <span class="badge {{ run.state }}">{{ run.state }}</span></h2>
+  <div class="row muted" style="gap:32px; font-size:13px;">
+    <div>id <code>{{ run.id }}</code></div>
+    <div>execution date<br>{{ run.execution_date | dt }}</div>
+    <div>started<br>{{ run.started_at | dt }}</div>
+    <div>finished<br>{{ run.finished_at | dt }}</div>
+    <div>duration<br>{{ duration | dur }}</div>
+  </div>
+
+  <h2>Graph</h2>
+  <div class="graph"><pre class="mermaid">{{ mermaid | safe }}</pre></div>
 
   <h2>Tasks</h2>
   {% if tasks %}
   <table>
-    <thead><tr><th>Task</th><th>State</th><th>Logs</th></tr></thead>
+    <thead><tr>
+      <th>Task</th><th>State</th><th>Pool</th>
+      <th>Queued</th><th>Started</th><th>Finished</th>
+      <th>Wait</th><th>Duration</th><th>Logs</th>
+    </tr></thead>
     <tbody>
       {% for t in tasks %}
       <tr>
         <td>{{ t.task_id }}</td>
         <td><span class="badge {{ t.state }}">{{ t.state }}</span></td>
+        <td><code>{{ t.pool }}</code></td>
+        <td class="muted">{{ t.queued_at | dt }}</td>
+        <td class="muted">{{ t.started_at | dt }}</td>
+        <td class="muted">{{ t.finished_at | dt }}</td>
+        <td class="muted">{{ t.wait | dur }}</td>
+        <td class="muted">{{ t.duration | dur }}</td>
         <td>
           {% if t.log_path %}
-            <a href="/runs/{{ run.id }}/tasks/{{ t.task_id }}/log">view log</a>
+            <a href="/runs/{{ run.id }}/tasks/{{ t.task_id }}/log">log</a>
           {% else %}<span class="muted">-</span>{% endif %}
         </td>
       </tr>
@@ -27,4 +45,9 @@
   {% else %}
   <p class="empty">No task runs recorded.</p>
   {% endif %}
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
 {% endblock %}

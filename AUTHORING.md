@@ -33,7 +33,9 @@ def pipeline():
 | `SSHOperator`    | Run any command on a **remote host** over SSH  | `conn_id`, `command` |
 | `RsyncOperator`  | Sync files between local and remote            | `conn_id`, `src`, `dest`, `direction` (`push`/`pull`) |
 
-All operators accept `retries=<n>` (default 0).
+All operators accept `retries=<n>` (default 0) and `pool="<name>"` (default
+`"default_pool"`). A pool caps how many tasks run at once across all DAGs — create
+pools and set their slot counts on the **Pools** page of the dashboard.
 
 ### Examples
 
