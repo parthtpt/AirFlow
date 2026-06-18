@@ -33,8 +33,9 @@ task_runs = TaskRunRepository()
 
 
 def render(request, template, **ctx):
-    ctx.update({"request": request, "adminer_url": ADMINER_URL})
-    return TEMPLATES.TemplateResponse(template, ctx)
+    # Starlette's current signature is TemplateResponse(request, name, context).
+    ctx.update({"adminer_url": ADMINER_URL})
+    return TEMPLATES.TemplateResponse(request, template, ctx)
 
 
 # --- Web dashboard ---------------------------------------------------------
