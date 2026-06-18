@@ -27,9 +27,36 @@ run from a single image.
 - **migrate** — one-shot job that runs `alembic upgrade head`, then exits. App
   services wait for it via `service_completed_successfully` so migrations never
   run concurrently.
-- **api** — FastAPI app (`backend.api.main:app`) served by uvicorn.
-- **scheduler** — parses DAGs and syncs them to the database.
-- **worker** — claims and executes task runs (skeleton; loop in place).
+- **api** — FastAPI app + web dashboard (`backend.api.main:app`) served by uvicorn.
+- **scheduler** — parses DAGs, syncs DAGs/tasks, and queues runs on their cron schedule.
+- **worker** — claims queued runs and executes their tasks (bash/python/ssh/rsync).
+- **adminer** — web UI for browsing the Postgres database directly.
+
+## Where to see everything (UIs)
+
+Once the stack is up:
+
+| What                         | URL                          |
+| ---------------------------- | ---------------------------- |
+| Dashboard (DAGs/runs/logs)   | http://localhost:8000        |
+| API docs (OpenAPI/Swagger)   | http://localhost:8000/docs   |
+| Database UI (Adminer)        | http://localhost:8080        |
+| JSON API                     | http://localhost:8000/api/dags, `/api/runs` |
+
+The dashboard's top nav links to the API docs and the database UI, so everything
+is reachable from one place. Adminer login: system **PostgreSQL**, server
+**postgres**, plus the user/password/db from your `.env`.
+
+## Writing pipelines
+
+You only write DAG files in `backend/dags/`. See **AUTHORING.md** for the full
+guide and `backend/dags/sample_dag.py` for a worked example (local bash, local +
+remote python, and rsync push/pull). Quick local test of a DAG:
+
+```bash
+python -m backend.cli list
+python -m backend.cli run hello_local
+```
 
 ## Prerequisites
 
@@ -77,7 +104,7 @@ Check it:
 docker compose ps
 curl http://localhost:8000/health          # liveness
 curl http://localhost:8000/health/ready    # readiness (checks the DB)
-curl http://localhost:8000/dags            # list registered DAGs
+curl http://localhost:8000/api/dags        # list registered DAGs (JSON)
 ```
 
 Logs and lifecycle:

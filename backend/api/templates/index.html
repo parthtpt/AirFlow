@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}AirFlow · Dashboard{% endblock %}
+{% block content %}
+  <h2>DAGs</h2>
+  {% if dags %}
+  <table>
+    <thead><tr><th>DAG</th><th>Schedule</th><th>Active</th></tr></thead>
+    <tbody>
+      {% for dag in dags %}
+      <tr>
+        <td><a href="/dags/{{ dag.dag_id }}">{{ dag.dag_id }}</a></td>
+        <td><code>{{ dag.schedule }}</code></td>
+        <td>{{ "yes" if dag.is_active else "no" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No DAGs registered yet. Start the scheduler so it syncs them.</p>
+  {% endif %}
+
+  <h2>Recent runs</h2>
+  {% if runs %}
+  <table>
+    <thead><tr><th>DAG</th><th>State</th><th>Execution date</th><th>Started</th><th></th></tr></thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a href="/dags/{{ run.dag_id }}">{{ run.dag_id }}</a></td>
+        <td><span class="badge {{ run.state }}">{{ run.state }}</span></td>
+        <td class="muted">{{ run.execution_date or "-" }}</td>
+        <td class="muted">{{ run.created_at or "-" }}</td>
+        <td><a href="/runs/{{ run.id }}">view</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No runs yet.</p>
+  {% endif %}
+{% endblock %}

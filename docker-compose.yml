@@ -18,6 +18,8 @@ x-app: &app
     # Mount DAGs and logs so they can change without rebuilding the image.
     - ./backend/dags:/app/backend/dags
     - ./backend/logs:/app/backend/logs
+    # SSH keys for remote (ssh/rsync) operators; referenced via CONN_*_KEY_FILE.
+    - ./keys:/keys:ro
   depends_on:
     migrate:
       condition: service_completed_successfully
@@ -55,6 +57,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Web UI for browsing the Postgres database directly.
+  adminer:
+    image: adminer:4
+    container_name: airflow-adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # One-shot job: apply DB migrations, then exit. Other app services wait for
   # this to complete successfully so migrations never run concurrently.

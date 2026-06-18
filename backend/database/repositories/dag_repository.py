@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 
 from backend.database.models.dag import DAG
@@ -15,6 +17,14 @@ class DAGRepository:
             )
 
             return session.scalar(stmt)
+
+    def get_by_id(self, dag_uuid):
+
+        if not isinstance(dag_uuid, uuid.UUID):
+            dag_uuid = uuid.UUID(str(dag_uuid))
+
+        with SessionLocal() as session:
+            return session.get(DAG, dag_uuid)
 
     def list_all(self):
 

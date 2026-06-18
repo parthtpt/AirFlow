@@ -24,6 +24,10 @@ backend/logs/
 .env.*
 !.env.example
 
+# SSH keys for remote operators (never commit private keys)
+keys/*
+!keys/.gitkeep
+
 # Pytest / coverage
 .pytest_cache/
 .coverage

@@ -60,6 +60,8 @@ jobs:
         run: |
           python -m tests.test_parser
           python -m tests.test_validator
+      - name: Execute a DAG end-to-end (local executor)
+        run: python -m backend.cli run hello_local
       - name: API import smoke test
         run: python -c "from backend.api.main import app; print('api import ok')"
 

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}AirFlow · {{ dag.dag_id }}{% endblock %}
+{% block content %}
+  <p><a href="/">&larr; Dashboard</a></p>
+  <h2>{{ dag.dag_id }}</h2>
+  <p class="muted">Schedule <code>{{ dag.schedule }}</code> ·
+     {{ "active" if dag.is_active else "inactive" }}</p>
+
+  <h2>Tasks</h2>
+  {% if tasks %}
+  <table>
+    <thead><tr><th>Task</th><th>Retries</th><th>Timeout (s)</th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr><td>{{ t.task_id }}</td><td>{{ t.retries }}</td><td>{{ t.timeout_seconds }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No tasks synced yet.</p>
+  {% endif %}
+
+  <h2>Runs</h2>
+  {% if runs %}
+  <table>
+    <thead><tr><th>State</th><th>Execution date</th><th>Started</th><th></th></tr></thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><span class="badge {{ run.state }}">{{ run.state }}</span></td>
+        <td class="muted">{{ run.execution_date or "-" }}</td>
+        <td class="muted">{{ run.created_at or "-" }}</td>
+        <td><a href="/runs/{{ run.id }}">view</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No runs yet.</p>
+  {% endif %}
+{% endblock %}

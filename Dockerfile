@@ -32,9 +32,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# Runtime lib for psycopg2 (libpq), no compiler needed.
+# Runtime deps: libpq5 for psycopg2; openssh-client + rsync for remote operators.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 \
+    && apt-get install -y --no-install-recommends \
+        libpq5 openssh-client rsync \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app \
     && useradd --system --gid app --home-dir /app app

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}AirFlow · log {{ task_id }}{% endblock %}
+{% block content %}
+  <p><a href="/runs/{{ run_id }}">&larr; Run</a></p>
+  <h2>Log · {{ task_id }}</h2>
+  <pre>{{ content }}</pre>
+{% endblock %}

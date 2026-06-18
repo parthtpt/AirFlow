@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}AirFlow · Run {{ run.id }}{% endblock %}
+{% block content %}
+  <p><a href="/">&larr; Dashboard</a></p>
+  <h2>Run <span class="badge {{ run.state }}">{{ run.state }}</span></h2>
+  <p class="muted">id <code>{{ run.id }}</code><br>
+     execution date {{ run.execution_date or "-" }}</p>
+
+  <h2>Tasks</h2>
+  {% if tasks %}
+  <table>
+    <thead><tr><th>Task</th><th>State</th><th>Logs</th></tr></thead>
+    <tbody>
+      {% for t in tasks %}
+      <tr>
+        <td>{{ t.task_id }}</td>
+        <td><span class="badge {{ t.state }}">{{ t.state }}</span></td>
+        <td>
+          {% if t.log_path %}
+            <a href="/runs/{{ run.id }}/tasks/{{ t.task_id }}/log">view log</a>
+          {% else %}<span class="muted">-</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No task runs recorded.</p>
+  {% endif %}
+{% endblock %}

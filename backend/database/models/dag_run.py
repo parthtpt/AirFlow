@@ -1,5 +1,7 @@
 import uuid
+from datetime import datetime
 
+from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
@@ -28,6 +30,12 @@ class DagRun(Base, AuditMixin):
 
     state: Mapped[str] = mapped_column(
         String(50),
+        index=True,
+    )
+
+    execution_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
         index=True,
     )
 
