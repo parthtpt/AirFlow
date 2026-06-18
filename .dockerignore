@@ -1,0 +1,35 @@
+# Version control
+.git
+.gitignore
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtualenvs
+.venv/
+venv/
+
+# Local env & secrets (never bake into the image)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+backend/logs/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# CI / docs that don't belong in the image
+.github/
+DEPLOYMENT.md
+README.md

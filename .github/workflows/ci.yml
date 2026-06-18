@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      # Catch real breakage (syntax errors, undefined names) without enforcing style.
+      - name: Ruff (errors only)
+        run: ruff check --select E9,F63,F7,F82 .
+
+  test:
+    name: Migrations & smoke
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://airflow:airflow@localhost:5432/airflow
+      DAG_FOLDER: backend/dags
+      LOG_FOLDER: backend/logs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Apply migrations
+        run: alembic upgrade head
+      - name: Parser & validator smoke test
+        run: |
+          python -m tests.test_parser
+          python -m tests.test_validator
+      - name: API import smoke test
+        run: python -c "from backend.api.main import app; print('api import ok')"
+
+  docker-build:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: airflow-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

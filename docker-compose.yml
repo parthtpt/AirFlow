@@ -1,23 +1,113 @@
-version: "3.9"
+# AirFlow full stack.
+#
+# Usage:
+#   cp .env.example .env   # then edit secrets
+#   docker compose up -d --build
+#
+# Services: postgres, redis, a one-shot `migrate` job, the api, scheduler and worker.
+# App services share one image/config via the `x-app` anchor below.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: airflow-app:latest
+  env_file: .env
+  restart: unless-stopped
+  volumes:
+    # Mount DAGs and logs so they can change without rebuilding the image.
+    - ./backend/dags:/app/backend/dags
+    - ./backend/logs:/app/backend/logs
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
 
 services:
 
   postgres:
     image: postgres:16
     container_name: airflow-postgres
-
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
-
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
+      POSTGRES_DB: ${POSTGRES_DB:-airflow}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-airflow} -d ${POSTGRES_DB:-airflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
-
     container_name: airflow-redis
-
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot job: apply DB migrations, then exit. Other app services wait for
+  # this to complete successfully so migrations never run concurrently.
+  migrate:
+    <<: *app
+    container_name: airflow-migrate
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    container_name: airflow-api
+    command:
+      - "uvicorn"
+      - "backend.api.main:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--workers"
+      - "${API_WORKERS:-2}"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').status==200 else sys.exit(1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  scheduler:
+    <<: *app
+    container_name: airflow-scheduler
+    command: ["python", "-m", "backend.scheduler.scheduler"]
+
+  worker:
+    <<: *app
+    container_name: airflow-worker
+    command: ["python", "-m", "backend.worker.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:

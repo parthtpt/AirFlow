@@ -17,6 +17,14 @@ venv/
 
 # Logs
 *.log
+backend/logs/
 
 # Env
 .env
+.env.*
+!.env.example
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
